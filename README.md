@@ -203,7 +203,7 @@ Function.prototype.myBind = function(context){
   
 > var person = Person.myBind(p, 'Jeff')(); 此时在fn = function(){...}中console.log(this, _self)可以发现，this指向window(出现了this指向错误的问题)，_self指向绑定函数Person(){...}，因此在程序中需要通过newThis与apply对this的指向进行修正。
 
-1. 圣杯模式
+2. 圣杯模式
 
 ```
 Function.prototype.myBind = function(context){
