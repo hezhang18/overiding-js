@@ -106,9 +106,13 @@ let s = new Son('Jeff',24);
 
 ### 3. 对象克隆（浅拷贝、深拷贝）
 
-浅拷贝
+原理：
 
-无法拷贝对象、数组这样的引用值属性，目标对象修改引用值属性会导致原对象的也被修改。
+浅拷贝无法拷贝对象、数组这样的引用值属性，目标对象修改引用值属性会导致原对象的也被修改。深拷贝可以拷贝对象、数组这样的引用值属性。目标对象修改引用值属性不影响原对象。
+
+实现：
+
+1. 浅拷贝
 
 ```
 function clone（target, origin）{
@@ -123,9 +127,7 @@ function clone（target, origin）{
 }
 ```
 
-深拷贝
-
-可以拷贝对象、数组这样的引用值属性。
+2. 深拷贝
 
 ```
 function deepClone(target, origin){
@@ -142,3 +144,84 @@ function deepClone(target, origin){
     }
 }
 ```
+
+测试：
+
+```
+// 浅拷贝
+
+var person1 = clone(person); // 或
+var person1 = {}; clone(person, person1);
+
+person1.name = 'Tom'; 
+// 此时不会影响person的该属性。
+
+person1.children.third={name: 'Ben', age: 8}; 
+// 此时person的children属性也被修改。
+
+// 深拷贝
+
+var person2 = deepClone(person); // 或
+var person2 = {}; deepClone(person, person2);
+
+person2.name = 'Tencent';
+//此时不会影响person的该属性。
+
+person2.children.fourth = {name: 'Mary', age: 1};
+//此时person的children属性不会被修改。
+```
+
+### 4. bind
+
+原理：
+
+bind与call、apply一样可以改变this指向；bind方法即可在bind中传参，也可在执行时传参；实例化时this指向会失效（即，new一个对象时指向实例化对象，否则指向被绑定的context）。
+
+实现：
+
+1. 一般方法
+
+```
+Function.prototype.myBind = function(context){
+    let _self = this,
+        args = Array.prototype.slice.call(arguments, 1);
+
+    let fn = function(){
+        let newArgs = Array.prototype.slice.call(arguments),
+            newThis = this instanceof _self ? this : context;
+            //1，修正this指向错误问题。
+
+        _self.apply(newThis, args.concat(newArgs);)
+    }
+    fn.prototype = _self.prototype; 
+    //2，通过原型链使实例化对象可以继承绑定函数中的属性。
+
+    return fn;
+}
+```
+> var person = Person.myBind(p, 'Jeff'); var obj = new person('male'); 此时在fn = function(){...}中console.log(this, _self)可以发现，this指向实例化对象obj（有2语句时，obj中会有name与gender属性；没有该语句时，obj会被实例化成一个空对象），_self指向绑定函数Person(){...}。
+  
+> var person = Person.myBind(p, 'Jeff')(); 此时在fn = function(){...}中console.log(this, _self)可以发现，this指向window(出现了this指向错误的问题)，_self指向绑定函数Person(){...}，因此在程序中需要通过newThis与apply对this的指向进行修正。
+
+1. 圣杯模式
+
+```
+Function.prototype.myBind = function(context){
+    let _self = this,
+        args = Array.prototype.slice.call(arguments, 1),
+        Buffer = function(){};
+    
+    let fn = function(){
+        let newArgs = Array.prototype.slice.call(arguments),
+            newThis = this instanceof _self ? this : context;
+        _self.apply(newThis, args.concat(newArgs));
+    }
+
+    Buffer.prototype = _self.prototype;
+    fn.prototype = new Buffer();
+
+    return fn;
+}
+```
+
+### 5. 
